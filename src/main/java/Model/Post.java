@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.*;
 import lombok.Data;
+import lombok.Getter;
 
 @Entity
 @Data
@@ -23,14 +24,11 @@ public class Post {
   @JoinColumn(name = "author_id")
   private User author;
 
+  @Getter
   @ManyToMany(mappedBy = "likedPosts")
   private Set<User> likers = new HashSet<>();
 
   // ... getters and setters ...
-
-  public Set<User> getLikers() {
-    return this.likers;
-  }
 
   public void likePost(User liker) {
     likers.add(liker);

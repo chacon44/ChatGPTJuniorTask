@@ -11,9 +11,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import javax.sql.DataSource;
 
 @Configuration
-@EnableJpaRepositories(basePackages = "com.example.package.repository",
-    entityManagerFactoryRef = "entityManagerFactory",
-    transactionManagerRef= "transactionManager")
+@EnableJpaRepositories(basePackages = "com.example.package.repository"
+)
 public class Config {
 
   @Bean
@@ -21,7 +20,7 @@ public class Config {
 
     LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
     em.setDataSource(dataSource);
-    em.setPackagesToScan(new String[] { "com.example.package.model" });
+    em.setPackagesToScan("com.example.package.model");
 
     JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
     em.setJpaVendorAdapter(vendorAdapter);

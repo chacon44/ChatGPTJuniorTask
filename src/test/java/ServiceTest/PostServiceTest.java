@@ -20,7 +20,6 @@ import static org.mockito.Mockito.*;
 
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -38,12 +37,11 @@ public class PostServiceTest {
   @Mock
   private UserRepository userRepository;
 
-  private User testUser;
   private Post testPost;
 
   @BeforeEach
   void setUp() {
-    testUser = new User();
+    User testUser = new User();
     testUser.setId(1L);
     testUser.setUsername("testuser");
 
@@ -56,7 +54,7 @@ public class PostServiceTest {
 
   @Test
   void getAllPostsTest() {
-    when(postRepository.findAll()).thenReturn(Arrays.asList(testPost));
+    when(postRepository.findAll()).thenReturn(Collections.singletonList(testPost));
 
     List<Post> posts = postService.getAllPosts();
 
@@ -88,11 +86,109 @@ public class PostServiceTest {
   void getPostByIdNotFoundTest() {
     when(postRepository.findById(any(Long.class))).thenReturn(Optional.empty());
 
-    assertThrows(ResourceNotFoundException.class, () -> {
-      postService.getPostById(1L);
-    });
+    assertThrows(ResourceNotFoundException.class, () -> postService.getPostById(1L));
     verify(postRepository, times(1)).findById(any(Long.class));
   }
 
-  // Similar tests for other methods including deletePost, updatePost and likePost
+  @Test
+  public void testDeletePost_NonexistentPost() {
+    when(postRepository.findById(1L)).thenReturn(Optional.empty());
+
+    Exception exception = assertThrows(ResourceNotFoundException.class, () -> postService.deletePost(1L));
+    assertEquals("Post not found with id: '1'", exception.getMessage());
+
+    verify(postRepository, times(0)).delete(any(Post.class));
+  }
+
+  @Test
+  public void testDeletePost_NullId() {
+    Exception exception = assertThrows(IllegalArgumentException.class, () -> postService.deletePost(null));
+    assertEquals("id must not be null", exception.getMessage());
+
+    verify(postRepository, times(0)).findById(any());
+    verify(postRepository, times(0)).delete(any(Post.class));
+  }
+
+  @Test
+  public void testUpdatePost_NonexistentPost() {
+    Post postUpdate = new Post();
+    postUpdate.setTitle("New Title");
+    postUpdate.setBody("New Body");
+
+    when(postRepository.findById(1L)).thenReturn(Optional.empty());
+
+    Exception exception = assertThrows(ResourceNotFoundException.class, () -> postService.updatePost(1L, postUpdate));
+    assertEquals("Post not found with id: '1'", exception.getMessage());
+
+    verify(postRepository, times(0)).save(any(Post.class));
+  }
+
+  @Test
+  public void testUpdatePost_NullId() {
+    Post postUpdate = new Post();
+    postUpdate.setTitle("New Title");
+    postUpdate.setBody("New Body");
+
+    Exception exception = assertThrows(IllegalArgumentException.class, () -> postService.updatePost(null, postUpdate));
+    assertEquals("Arguments must not be null", exception.getMessage());
+
+    verify(postRepository, times(0)).findById(any());
+    verify(postRepository, times(0)).save(any(Post.class));
+  }
+
+  @Test
+  public void testUpdatePost_NullUpdates() {
+    Exception exception = assertThrows(IllegalArgumentException.class, () -> postService.updatePost(1L, null));
+    assertEquals("Arguments must not be null", exception.getMessage());
+
+    verify(postRepository, times(0)).findById(any());
+    verify(postRepository, times(0)).save(any(Post.class));
+  }
+
+  @Test
+  public void testLikePost_NonexistentPost() {
+    User user = new User();
+    user.setId(1L);
+
+    when(postRepository.findById(1L)).thenReturn(Optional.empty());
+
+    Exception exception = assertThrows(ResourceNotFoundException.class, () -> postService.likePost(1L, 1L));
+    assertEquals("Post not found with id: '1'", exception.getMessage());
+
+    verify(userRepository, times(0)).save(any(User.class));
+  }
+
+  @Test
+  public void testLikePost_NonexistentUser() {
+    Post post = new Post();
+    post.setId(1L);
+
+    when(postRepository.findById(1L)).thenReturn(Optional.of(post));
+    when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+    Exception exception = assertThrows(UsernameNotFoundException.class, () -> postService.likePost(1L, 1L));
+    assertEquals("User Not Found", exception.getMessage());
+
+    verify(userRepository, times(0)).save(any(User.class));
+  }
+
+  @Test
+  public void testLikePost_NullPostId() {
+    Exception exception = assertThrows(IllegalArgumentException.class, () -> postService.likePost(null, 1L));
+    assertEquals("postId and userId must not be null", exception.getMessage());
+
+    verify(postRepository, times(0)).findById(any());
+    verify(userRepository, times(0)).findById(any());
+    verify(userRepository, times(0)).save(any(User.class));
+  }
+
+  @Test
+  public void testLikePost_NullUserId() {
+    Exception exception = assertThrows(IllegalArgumentException.class, () -> postService.likePost(1L, null));
+    assertEquals("postId and userId must not be null", exception.getMessage());
+
+    verify(postRepository, times(0)).findById(any());
+    verify(userRepository, times(0)).findById(any());
+    verify(userRepository, times(0)).save(any(User.class));
+  }
 }

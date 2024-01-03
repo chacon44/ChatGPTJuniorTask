@@ -1,4 +1,5 @@
 package ControllerTest;
+
 import Controller.UserController;
 import Model.User;
 import static org.hamcrest.Matchers.is;
@@ -54,7 +55,7 @@ public class UserControllerTest {
     List<User> userList = Arrays.asList(user1, user2);
     when(userService.getAllUsers()).thenReturn(userList);
 
-    mockMvc.perform(get("/users")
+    mockMvc.perform(get("/api/users")
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.size()", is(userList.size())));
@@ -66,7 +67,7 @@ public class UserControllerTest {
     user.setUsername("test");
     when(userService.getUserById(1L)).thenReturn(user);
 
-    mockMvc.perform(get("/users/1")
+    mockMvc.perform(get("/api/users/1")
             .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.username", is(user.getUsername())));
@@ -78,12 +79,37 @@ public class UserControllerTest {
     user.setUsername("test");
     when(userService.createUser(any(User.class))).thenReturn(user);
 
-    mockMvc.perform(post("/users")
+    mockMvc.perform(post("/api/users")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(user)))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.username", is(Integer.parseInt(user.getUsername()))));
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.username", is(user.getUsername())));
+  }
+  @Test
+  public void testDeleteUserById() throws Exception {
+    doNothing().when(userService).deleteUserById(1L);
+
+    mockMvc.perform(delete("/api/users/1")
+            .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNoContent());
+
+    verify(userService, times(1)).deleteUserById(1L);
   }
 
-  // Similar kind of tests for other methods, update and delete
+  @Test
+  public void testUpdateUser() throws Exception {
+    User user = new User();
+    user.setUsername("test");
+
+    User userUpdates = new User();
+    userUpdates.setUsername("newTest");
+
+    when(userService.updateUser(1L, userUpdates)).thenReturn(user);
+
+    mockMvc.perform(put("/api/users/1")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(userUpdates)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.username", is(user.getUsername())));
+  }
 }

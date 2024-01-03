@@ -4,13 +4,14 @@ import java.util.HashSet;
 import javax.persistence.*;
 import java.util.Set;
 
-import java.util.HashSet;
-import javax.persistence.*;
-import java.util.Set;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Data
+@Getter
+@Setter
 public class User {
 
   @Id
@@ -42,5 +43,18 @@ public class User {
     following.add(userToFollow);
     userToFollow.getFollowers().add(this);
   }
-  // Getters and Setters
+
+  // ... existing methods, such as followUser(User) and likePost(Post)...
+
+  public void unfollowUser(User user) {
+    this.following.remove(user);
+  }
+
+  public void unlikePost(Post post) {
+    this.likedPosts.remove(post);
+  }
+
+  @Setter
+  private String email;
+
 }
